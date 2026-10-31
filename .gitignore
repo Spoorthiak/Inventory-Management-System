@@ -1,0 +1,42 @@
+
+# Java / Maven
+**/target/
+**/*.class
+**/*.log
+
+# Eclipse
+**/.settings/
+**/.classpath
+**/.project
+
+# Node / React
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/.vite/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+
+# Temporary files
+*.tmp
+*.bak
+
+# Generated IDE and build files
+**/bin/
+
+# Unwanted temporary files
+MaterialService/git
+MaterialService/main
+MaterialService/mkdir
+vendorservice/jar
