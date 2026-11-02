@@ -1,68 +1,31 @@
-
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 
-function Report() {
+export default function Report() {
   const [vendors, setVendors] = useState([]);
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [reportData, setReportData] = useState([]);
+  const [searched, setSearched] = useState(false);
 
   useEffect(() => {
-    // fetch("http://localhost:8081/inventory/vendors")
-    fetch("http://localhost:8086/vendors")
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Vendors:", data);
-        setVendors(data);
-      })
-      .catch((error) => {
-        console.error("Error fetching vendors:", error);
-      });
+    fetch("http://localhost:8086/vendors").then((response) => response.json()).then(setVendors)
+      .catch((error) => console.error("Error fetching vendors:", error));
   }, []);
 
   const handleSearch = async () => {
-    if (!selectedVendor) {
-      alert("Please select a vendor");
-      return;
-    }
-
-    if (!fromDate || !toDate) {
-      alert("Please select From Date and To Date");
-      return;
-    }
-
-    if (fromDate > toDate) {
-      alert("From Date cannot be greater than To Date");
-      return;
-    }
-
+    if (!selectedVendor) { alert("Please select a vendor"); return; }
+    if (!fromDate || !toDate) { alert("Please select From Date and To Date"); return; }
+    if (fromDate > toDate) { alert("From Date cannot be greater than To Date"); return; }
     try {
-      const response = await fetch(
-        "http://localhost:8086/report/controller/getPurchaseDetails",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            vendorName: selectedVendor.vendorName,
-            fromDate: fromDate,
-            toDate: toDate,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch report");
-      }
-
-      const data = await response.json();
-
-      console.log("Report Data:", data);
-
-      setReportData(data);
+      const response = await fetch("http://localhost:8086/report/controller/getPurchaseDetails", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vendorName: selectedVendor.vendorName, fromDate, toDate }),
+      });
+      if (!response.ok) throw new Error("Failed to fetch report");
+      setReportData(await response.json());
+      setSearched(true);
     } catch (error) {
       console.error("Error fetching report:", error);
       alert("Failed to load report");
@@ -70,346 +33,47 @@ function Report() {
   };
 
   const formatDate = (date) => {
-    if (!date) {
-      return "";
-    }
-
+    if (!date) return "";
     const parts = date.split("-");
-
-    if (parts.length !== 3) {
-      return date;
-    }
-
-    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : date;
   };
+  const totalAmount = reportData.reduce((sum, item) => sum + (Number(item.purchaseAmount) || 0), 0);
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#eef2f6",
-        padding: "30px",
-        boxSizing: "border-box",
-      }}
-    >
+    <div className="app-shell">
       <Navbar />
-
-      <div
-        style={{
-          maxWidth: "1250px",
-          margin: "0 auto",
-          backgroundColor: "#ffffff",
-          padding: "30px",
-          borderRadius: "8px",
-          border: "1px solid #d9dee5",
-          boxShadow: "0 3px 12px rgba(0,0,0,0.10)",
-          boxSizing: "border-box",
-        }}
-      >
-        {/* Page Title */}
-        <h1
-          style={{
-            textAlign: "center",
-            marginBottom: "35px",
-            fontSize: "36px",
-            color: "#26384a",
-          }}
-        >
-          Vendor Purchase Report
-        </h1>
-
-        {/* Search Section */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "10px",
-            flexWrap: "wrap",
-            marginBottom: "30px",
-            padding: "18px",
-            backgroundColor: "#f5f7f9",
-            border: "1px solid #dfe4e9",
-            borderRadius: "6px",
-          }}
-        >
-          {/* Vendor */}
-          <label
-            style={{
-              color: "#394957",
-              fontWeight: "600",
-            }}
-          >
-            Vendor Name
-          </label>
-
-          <select
-            value={selectedVendor ? selectedVendor.vendorName : ""}
-            onChange={(e) => {
-              const vendor = vendors.find(
-                (item) => item.vendorName === e.target.value
-              );
-
-              setSelectedVendor(vendor || null);
-              setReportData([]);
-            }}
-            style={inputStyle}
-          >
-            <option value="">Select Vendor</option>
-
-            {vendors.map((vendorItem) => (
-              <option
-                key={vendorItem.vendorId}
-                value={vendorItem.vendorName}
-              >
-                {vendorItem.vendorName}
-              </option>
-            ))}
-          </select>
-
-          {/* From Date */}
-          <label
-            style={{
-              color: "#394957",
-              fontWeight: "600",
-            }}
-          >
-            From Date
-          </label>
-
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => {
-              setFromDate(e.target.value);
-              setReportData([]);
-            }}
-            style={dateStyle}
-          />
-
-          {/* To Date */}
-          <label
-            style={{
-              color: "#394957",
-              fontWeight: "600",
-            }}
-          >
-            To Date
-          </label>
-
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => {
-              setToDate(e.target.value);
-              setReportData([]);
-            }}
-            style={dateStyle}
-          />
-
-          {/* Search */}
-          <button
-            type="button"
-            onClick={handleSearch}
-            style={buttonStyle}
-          >
-            Search
-          </button>
+      <main className="content-wrap">
+        <div className="page-heading">
+          <div><p className="eyebrow">ANALYTICS & RECORDS</p><h1>Vendor purchase report</h1><p className="muted">Review purchase details by vendor and date range.</p></div>
+          <span className="heading-icon">▤</span>
         </div>
+        <section className="surface-card report-filter-card">
+          <div className="card-heading"><div><h2>Report filters</h2><p className="muted">Choose a vendor and reporting period.</p></div></div>
+          <div className="filter-grid">
+            <div className="field-group"><label htmlFor="reportVendor">Vendor name <span className="required-mark">*</span></label><select id="reportVendor" value={selectedVendor?.vendorName || ""} onChange={(e) => { const found = vendors.find((v) => v.vendorName === e.target.value); setSelectedVendor(found || null); setReportData([]); setSearched(false); }}><option value="">Select vendor</option>{vendors.map((v) => <option key={v.vendorId} value={v.vendorName}>{v.vendorName}</option>)}</select></div>
+            <div className="field-group"><label htmlFor="fromDate">From date <span className="required-mark">*</span></label><input id="fromDate" type="date" value={fromDate} onChange={(e) => { setFromDate(e.target.value); setSearched(false); }} /></div>
+            <div className="field-group"><label htmlFor="toDate">To date <span className="required-mark">*</span></label><input id="toDate" type="date" value={toDate} onChange={(e) => { setToDate(e.target.value); setSearched(false); }} /></div>
+            <button type="button" className="primary-button filter-button" onClick={handleSearch}>Generate report <span>→</span></button>
+          </div>
+        </section>
 
-        {/* Vendor Details */}
         {selectedVendor && (
-          <div
-            style={{
-              textAlign: "center",
-              marginBottom: "30px",
-              padding: "15px",
-              fontSize: "16px",
-              lineHeight: "1.8",
-              backgroundColor: "#f8fafb",
-              border: "1px solid #e0e5e9",
-              borderRadius: "6px",
-            }}
-          >
-            <p style={{ margin: "4px", color: "#536474" }}>
-              <strong style={{ color: "#394957" }}>Address:</strong>{" "}
-              {selectedVendor.vendorAddress}
-            </p>
-
-            <p style={{ margin: "4px", color: "#536474" }}>
-              <strong style={{ color: "#394957" }}>
-                Contact Number:
-              </strong>{" "}
-              {selectedVendor.contactNumber}
-            </p>
-
-            <p style={{ margin: "4px", color: "#536474" }}>
-              <strong style={{ color: "#394957" }}>
-                Contact Person:
-              </strong>{" "}
-              {selectedVendor.contactPerson}
-            </p>
-          </div>
+          <section className="vendor-info-card">
+            <div className="vendor-avatar">♧</div>
+            <div><strong>{selectedVendor.vendorName}</strong><p>{selectedVendor.vendorAddress || "Vendor address not available"}</p></div>
+            <div className="vendor-meta"><small>CONTACT PERSON</small><strong>{selectedVendor.contactPerson || "—"}</strong></div>
+            <div className="vendor-meta"><small>CONTACT NUMBER</small><strong>{selectedVendor.contactNumber || "—"}</strong></div>
+          </section>
         )}
 
-        {/* Report Table */}
         {reportData.length > 0 && (
-          <div
-            style={{
-              overflowX: "auto",
-              marginTop: "20px",
-            }}
-          >
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                textAlign: "center",
-              }}
-            >
-              <thead>
-                <tr>
-                  <th style={tableHeaderStyle}>
-                    Material Category
-                  </th>
-
-                  <th style={tableHeaderStyle}>
-                    Material Type
-                  </th>
-
-                  <th style={tableHeaderStyle}>
-                    Brand
-                  </th>
-
-                  <th style={tableHeaderStyle}>
-                    Quantity
-                  </th>
-
-                  <th style={tableHeaderStyle}>
-                    Unit
-                  </th>
-
-                  <th style={tableHeaderStyle}>
-                    Price
-                  </th>
-
-                  <th style={tableHeaderStyle}>
-                    Balance
-                  </th>
-
-                  <th style={tableHeaderStyle}>
-                    Purchase Date
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {reportData.map((purchase) => (
-                  <tr key={purchase.purchaseId}>
-                    <td style={tableCellStyle}>
-                      {purchase.materialCategoryName}
-                    </td>
-
-                    <td style={tableCellStyle}>
-                      {purchase.materialTypeName}
-                    </td>
-
-                    <td style={tableCellStyle}>
-                      {purchase.brandName}
-                    </td>
-
-                    <td style={tableCellStyle}>
-                      {purchase.quantity}
-                    </td>
-
-                    <td style={tableCellStyle}>
-                      {purchase.materialUnitName}
-                    </td>
-
-                    <td style={tableCellStyle}>
-                      {Number(purchase.purchaseAmount).toFixed(2)}
-                    </td>
-
-                    <td style={tableCellStyle}>
-                      {Number(purchase.balance).toFixed(2)}
-                    </td>
-
-                    <td style={tableCellStyle}>
-                      {formatDate(purchase.purchaseDate)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <section className="surface-card report-results">
+            <div className="card-heading report-results-heading"><div><h2>Purchase transactions</h2><p className="muted">{reportData.length} record(s) found for the selected period.</p></div><div className="total-pill"><small>Total purchase amount</small><strong>₹{totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></div></div>
+            <div className="table-scroll"><table className="data-table"><thead><tr><th>Material category</th><th>Material type</th><th>Brand</th><th>Quantity</th><th>Unit</th><th>Price (₹)</th><th>Balance (₹)</th><th>Purchase date</th></tr></thead><tbody>{reportData.map((purchase) => <tr key={purchase.purchaseId}><td>{purchase.materialCategoryName}</td><td>{purchase.materialTypeName}</td><td>{purchase.brandName}</td><td>{purchase.quantity}</td><td>{purchase.materialUnitName}</td><td>{Number(purchase.purchaseAmount).toFixed(2)}</td><td>{Number(purchase.balance).toFixed(2)}</td><td>{formatDate(purchase.purchaseDate)}</td></tr>)}</tbody></table></div>
+          </section>
         )}
-
-        {/* No Records */}
-        {selectedVendor &&
-          fromDate &&
-          toDate &&
-          reportData.length === 0 && (
-            <p
-              style={{
-                textAlign: "center",
-                marginTop: "30px",
-                fontSize: "18px",
-                color: "#536474",
-              }}
-            >
-              No purchase records found for the selected vendor and date range.
-            </p>
-          )}
-      </div>
+        {searched && reportData.length === 0 && <section className="empty-state"><span>▤</span><h3>No purchase records found</h3><p>Try another vendor or date range.</p></section>}
+      </main>
     </div>
   );
 }
-
-/* Input styling */
-const inputStyle = {
-  padding: "10px",
-  fontSize: "15px",
-  border: "1px solid #b8c1ca",
-  borderRadius: "5px",
-  backgroundColor: "#ffffff",
-  color: "#333333",
-};
-
-/* Date styling */
-const dateStyle = {
-  padding: "9px",
-  fontSize: "15px",
-  border: "1px solid #b8c1ca",
-  borderRadius: "5px",
-  backgroundColor: "#ffffff",
-  color: "#333333",
-};
-
-/* Search button styling */
-const buttonStyle = {
-  padding: "10px 22px",
-  fontSize: "15px",
-  fontWeight: "600",
-  cursor: "pointer",
-  borderRadius: "5px",
-  border: "1px solid #536b82",
-  backgroundColor: "#536b82",
-  color: "#ffffff",
-};
-
-/* Table styling */
-const tableHeaderStyle = {
-  border: "1px solid #c9d0d6",
-  padding: "12px 8px",
-  backgroundColor: "#e8edf2",
-  color: "#26384a",
-  fontWeight: "bold",
-};
-
-const tableCellStyle = {
-  border: "1px solid #d5dbe0",
-  padding: "12px 8px",
-  color: "#394957",
-};
-
-export default Report;
