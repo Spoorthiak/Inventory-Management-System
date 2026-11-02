@@ -65,8 +65,9 @@ public class VendorServiceConsumer {
 			LOGGER.info("Execution over [hitGetVendorDetails()]");
 			this.vendorBeanList = vendorList;
 		}catch(Exception exception){
-			throw new MicroServiceException();
-		}
+    LOGGER.error("Error while connecting to Vendor Service", exception);
+    throw new MicroServiceException();
+}
 	}
 
 
