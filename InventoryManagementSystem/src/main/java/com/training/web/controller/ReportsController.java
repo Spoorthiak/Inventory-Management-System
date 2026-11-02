@@ -27,7 +27,10 @@ import com.training.web.client.VendorServiceConsumer;
 
 
 @Controller
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {
+    "http://localhost:5173",
+    "https://ims-frontend-ti4c.onrender.com"
+})
 public class ReportsController {
 
 	private static Logger LOGGER = LoggerFactory.getLogger(ReportsController.class);

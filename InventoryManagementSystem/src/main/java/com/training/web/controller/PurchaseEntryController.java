@@ -1,13 +1,21 @@
 package com.training.web.controller;
 
 import java.util.List;
+
 import javax.servlet.http.HttpSession;
+import javax.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import javax.validation.Valid;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.SessionAttributes;
+
 import com.training.business.bean.MaterialCategoryBean;
 import com.training.business.bean.MaterialTypeBean;
 import com.training.business.bean.PurchaseBean;
@@ -21,7 +29,10 @@ import com.training.web.client.UnitServiceConsumer;
 import com.training.web.client.VendorServiceConsumer;
 
 
-@CrossOrigin(origins="http://localhost:5173")
+@CrossOrigin(origins = {
+    "http://localhost:5173",
+    "https://ims-frontend-ti4c.onrender.com"
+})
 @RestController
 @SessionAttributes({ "purchaseBean" })
 public class PurchaseEntryController {
