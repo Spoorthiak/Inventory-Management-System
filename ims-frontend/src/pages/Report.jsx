@@ -10,27 +10,50 @@ export default function Report() {
   const [searched, setSearched] = useState(false);
 
   useEffect(() => {
-    fetch("http://localhost:8086/vendors").then((response) => response.json()).then(setVendors)
+    fetch("https://ims-main-service.onrender.com/vendors").then((response) => response.json()).then(setVendors)
       .catch((error) => console.error("Error fetching vendors:", error));
   }, []);
 
   const handleSearch = async () => {
-    if (!selectedVendor) { alert("Please select a vendor"); return; }
-    if (!fromDate || !toDate) { alert("Please select From Date and To Date"); return; }
-    if (fromDate > toDate) { alert("From Date cannot be greater than To Date"); return; }
-    try {
-      const response = await fetch("http://localhost:8086/report/controller/getPurchaseDetails", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ vendorName: selectedVendor.vendorName, fromDate, toDate }),
-      });
-      if (!response.ok) throw new Error("Failed to fetch report");
-      setReportData(await response.json());
-      setSearched(true);
-    } catch (error) {
-      console.error("Error fetching report:", error);
-      alert("Failed to load report");
-    }
-  };
+  if (!selectedVendor) {
+    alert("Please select a vendor");
+    return;
+  }
+
+  if (!fromDate || !toDate) {
+    alert("Please select From Date and To Date");
+    return;
+  }
+
+  if (fromDate > toDate) {
+    alert("From Date cannot be greater than To Date");
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      "https://ims-main-service.onrender.com/report/controller/getPurchaseDetails",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vendorName: selectedVendor.vendorName,
+          fromDate,
+          toDate,
+        }),
+      }
+    );
+
+    if (!response.ok) throw new Error("Failed to fetch report");
+
+    setReportData(await response.json());
+    setSearched(true);
+
+  } catch (error) {
+    console.error("Error fetching report:", error);
+    alert("Failed to load report");
+  }
+};
 
   const formatDate = (date) => {
     if (!date) return "";

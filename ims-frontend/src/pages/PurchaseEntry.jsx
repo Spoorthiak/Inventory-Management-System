@@ -19,63 +19,113 @@ export default function PurchaseEntry() {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    fetch("http://localhost:8086/vendors").then((r) => r.json()).then(setVendors)
-      .catch((error) => console.error("Error fetching vendors:", error));
-    fetch("http://localhost:8086/categories").then((r) => r.json()).then(setCategories)
-      .catch((error) => console.error("Error fetching categories:", error));
-  }, []);
+  fetch("https://ims-main-service.onrender.com/vendors")
+    .then((r) => r.json())
+    .then(setVendors)
+    .catch((error) => console.error("Error fetching vendors:", error));
 
-  useEffect(() => {
-    if (!category) { setMaterialTypes([]); setUnits([]); setMaterialType(""); setUnit(""); return; }
-    fetch("http://localhost:8086/getUnitAndTypeList", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ materialCategoryId: category }),
-    }).then((r) => r.json()).then((data) => {
+  fetch("https://ims-main-service.onrender.com/categories")
+    .then((r) => r.json())
+    .then(setCategories)
+    .catch((error) => console.error("Error fetching categories:", error));
+}, []);
+
+useEffect(() => {
+  if (!category) {
+    setMaterialTypes([]);
+    setUnits([]);
+    setMaterialType("");
+    setUnit("");
+    return;
+  }
+
+  fetch("https://ims-main-service.onrender.com/getUnitAndTypeList", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ materialCategoryId: category }),
+  })
+    .then((r) => r.json())
+    .then((data) => {
       setMaterialTypes(data.materialTypeList || []);
       setUnits(data.unitList || []);
-    }).catch((error) => console.error("Error fetching type and unit:", error));
-  }, [category]);
+    })
+    .catch((error) =>
+      console.error("Error fetching type and unit:", error)
+    );
+}, [category]);
 
-  const resetForm = () => {
-    setVendor(""); setCategory(""); setMaterialType(""); setUnit("");
-    setBrandName(""); setQuantity(""); setPurchaseAmount(""); setPurchaseDate(""); setErrors({});
+const resetForm = () => {
+  setVendor("");
+  setCategory("");
+  setMaterialType("");
+  setUnit("");
+  setBrandName("");
+  setQuantity("");
+  setPurchaseAmount("");
+  setPurchaseDate("");
+  setErrors({});
+};
+
+const handleSubmit = async (event) => {
+  event.preventDefault();
+
+  const nextErrors = {};
+
+  if (!vendor) nextErrors.vendor = "Please select a vendor.";
+  if (!category) nextErrors.category = "Please select a material category.";
+  if (!materialType) nextErrors.materialType = "Please select a material type.";
+  if (!unit) nextErrors.unit = "Please select a unit.";
+  if (!brandName.trim()) nextErrors.brandName = "Brand name is required.";
+
+  if (!quantity) nextErrors.quantity = "Quantity is required.";
+  else if (!/^\d+$/.test(quantity))
+    nextErrors.quantity = "Enter a whole number.";
+
+  if (!purchaseAmount)
+    nextErrors.purchaseAmount = "Purchase amount is required.";
+  else if (!/^\d+(\.\d{1,2})?$/.test(purchaseAmount))
+    nextErrors.purchaseAmount = "Enter a valid amount (up to 2 decimals).";
+
+  if (!purchaseDate)
+    nextErrors.purchaseDate = "Purchase date is required.";
+
+  setErrors(nextErrors);
+
+  if (Object.keys(nextErrors).length) return;
+
+  const purchaseData = {
+    vendorName: vendor,
+    materialCategoryId: category,
+    materialTypeId: materialType,
+    unitId: unit,
+    brandName,
+    quantity: Number(quantity),
+    purchaseAmount: Number(purchaseAmount),
+    purchaseDate,
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const nextErrors = {};
-    if (!vendor) nextErrors.vendor = "Please select a vendor.";
-    if (!category) nextErrors.category = "Please select a material category.";
-    if (!materialType) nextErrors.materialType = "Please select a material type.";
-    if (!unit) nextErrors.unit = "Please select a unit.";
-    if (!brandName.trim()) nextErrors.brandName = "Brand name is required.";
-    if (!quantity) nextErrors.quantity = "Quantity is required.";
-    else if (!/^\d+$/.test(quantity)) nextErrors.quantity = "Enter a whole number.";
-    if (!purchaseAmount) nextErrors.purchaseAmount = "Purchase amount is required.";
-    else if (!/^\d+(\.\d{1,2})?$/.test(purchaseAmount)) nextErrors.purchaseAmount = "Enter a valid amount (up to 2 decimals).";
-    if (!purchaseDate) nextErrors.purchaseDate = "Purchase date is required.";
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length) return;
-
-    const purchaseData = {
-      vendorName: vendor, materialCategoryId: category, materialTypeId: materialType,
-      unitId: unit, brandName, quantity: Number(quantity),
-      purchaseAmount: Number(purchaseAmount), purchaseDate,
-    };
-    try {
-      const response = await fetch("http://localhost:8086/addPurchaseDetail", {
-        method: "POST", headers: { "Content-Type": "application/json" },
+  try {
+    const response = await fetch(
+      "https://ims-main-service.onrender.com/addPurchaseDetail",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(purchaseData),
-      });
-      if (!response.ok) throw new Error("Failed to save purchase entry");
-      const data = await response.json();
-      navigate("/purchase-success", { state: { transactionId: data.purchase.transactionId } });
-    } catch (error) {
-      console.error("Error saving purchase entry:", error);
-      alert("Failed to save Purchase Entry");
-    }
-  };
+      }
+    );
 
+    if (!response.ok) throw new Error("Failed to save purchase entry");
+
+    const data = await response.json();
+
+    navigate("/purchase-success", {
+      state: { transactionId: data.purchase.transactionId },
+    });
+  } catch (error) {
+    console.error("Error saving purchase entry:", error);
+    alert("Failed to save Purchase Entry");
+  }
+};
   const field = (id, label, control, error) => (
     <div className="field-group">
       <label htmlFor={id}>{label}<span className="required-mark"> *</span></label>
