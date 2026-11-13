@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
-const API_BASE_URL = "https://ims-main-service.onrender.com";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://ims-main-service.onrender.com";
 
 export default function PurchaseEntry() {
   const navigate = useNavigate();

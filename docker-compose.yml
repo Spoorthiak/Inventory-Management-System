@@ -1,0 +1,44 @@
+
+services:
+  vendor-service:
+    image: ims-vendor:1.0
+    container_name: ims-vendor
+    ports:
+      - "8084:8084"
+    environment:
+      DB_URL: "jdbc:mysql://gateway01.ap-northeast-1.prod.aws.tidbcloud.com:4000/vendordb?sslMode=VERIFY_IDENTITY"
+      DB_USERNAME: "${DB_USERNAME}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+
+  material-service:
+    image: ims-material:1.0
+    container_name: ims-material
+    ports:
+      - "8085:8085"
+    environment:
+      DB_URL: "jdbc:mysql://gateway01.ap-northeast-1.prod.aws.tidbcloud.com:4000/materialdb?sslMode=VERIFY_IDENTITY"
+      DB_USERNAME: "${DB_USERNAME}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+
+  ims-service:
+    image: ims-main:1.0
+    container_name: ims-main
+    ports:
+      - "8086:8086"
+    environment:
+      DB_URL: "jdbc:mysql://gateway01.ap-northeast-1.prod.aws.tidbcloud.com:4000/imsdb?sslMode=VERIFY_IDENTITY"
+      DB_USERNAME: "${DB_USERNAME}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      MATERIAL_SERVICE_URL: "http://material-service:8085"
+      VENDOR_SERVICE_URL: "http://vendor-service:8084/vendor"
+    depends_on:
+      - vendor-service
+      - material-service
+
+  frontend:
+    image: ims-frontend:1.0
+    container_name: ims-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - ims-service
